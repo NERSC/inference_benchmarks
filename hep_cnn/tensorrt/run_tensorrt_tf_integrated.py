@@ -7,6 +7,7 @@ from tensorflow.python.ops import data_flow_ops
 import tensorflow.contrib.tensorrt as trt
 
 import numpy as np
+import h5py as h5
 import time
 from tensorflow.python.platform import gfile
 from tensorflow.python.client import timeline
@@ -39,6 +40,7 @@ if "__main__" in __name__:
   P.add_argument('--FP16',action='store_true')
   P.add_argument('--INT8',action='store_true')
   P.add_argument('--input_prefix',type=str)
+  P.add_argument('--input_path',type=str,default='./',help="path to read input files from for inference mode")
   P.add_argument('--num_loops',type=int,default=20)
   P.add_argument('--batch_size',type=int,default=128)
   P.add_argument('--with_timeline',action='store_true')
@@ -70,9 +72,13 @@ if "__main__" in __name__:
       timings,comp,valfp32,mdstats = timeGraph(graph_def, f.batch_size, f.num_loops, "Placeholder", ["Softmax"], dummy_input, timelineName)
       printStats("TRT-FP32",timings,f.batch_size)
       printStats("TRT-FP32RS",mdstats,f.batch_size)
-    else:
+    elif f.mode=='run':
       result = runGraph(graph_def, f.batch_size, "Placeholder", ["Softmax"])
-      np.save("result_fp32.npy", result)
+    elif f.mode == 'inference':
+      outfilename = 'results_fp32.h5'
+      predictions, labels, weights, psr = runGraph(graph_def, f.batch_size, "Placeholder", ["Softmax"], dtype=np.float32, input_data=f.input_path)
+    else:
+      raise ValueError("Error, unknown mode {m}.".format(m=f.mode))
   if f.FP16:
     #load graph
     graph_def = load_graph(f.input_prefix+'.FP16.pb')
@@ -81,6 +87,17 @@ if "__main__" in __name__:
       timings,comp,valfp32,mdstats = timeGraph(graph_def, f.batch_size, f.num_loops, "Placeholder", ["Softmax"], dummy_input, timelineName)
       printStats("TRT-16",timings,f.batch_size)
       printStats("TRT-FP16RS",mdstats,f.batch_size)
-    else:
+    elif f.mode == 'run':
       result = runGraph(graph_def, f.batch_size, "Placeholder", ["Softmax"])
-      np.save("result_fp16.npy", result)
+    elif f.mode == 'inference':
+      outfilename = 'results_fp16.h5'
+      predictions, labels, weights, psr = runGraph(graph_def, f.batch_size, "Placeholder", ["Softmax"], dtype=np.float32, input_data=f.input_path)
+    else:
+      raise ValueError("Error, unknown mode {m}.".format(m=f.mode))
+
+  if f.mode == 'inference':
+    with h5.File(outfilename, 'w-') as f:
+      f['prediction'] = predictions[...]
+      f['label'] = labels[...]
+      f['weight'] = weights[...]
+      f['psr'] = psr[...]

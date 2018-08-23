@@ -16,6 +16,8 @@ tf.logging.set_verbosity(tf.logging.INFO)
 
 import os
 
+from data import *
+
 def load_graph(filename):
   with gfile.FastGFile(filename,'rb') as f:
     graph_def = tf.GraphDef()
@@ -95,26 +97,20 @@ def timeGraph(gdef, batch_size, num_loops, input_name, outputs, dummy_input, tim
 
 
 #produce output
-def runGraph(gdef, batch_size, input_name, outputs):
+def runGraph(gdef, batch_size, num_batches, input_name, outputs):
   
   #set up graph
   gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.50)
   tf.reset_default_graph()
   g = tf.Graph()
   outlist=[]
-  
+    
   #input
-  input_data = np.random.uniform(size=(batch_size*100, 64)).astype(np.float32)
-  
   with g.as_default():
-    dataset=tf.data.Dataset.from_tensor_slices(input_data)
-    dataset=dataset.repeat(1)
-    dataset=dataset.batch(batch_size)
-    iterator=dataset.make_one_shot_iterator()
-    next_element=iterator.get_next()
+    rand = tf.random_uniform(shape=(batch_size, 64), minval=0., maxval=1.)
     out = tf.import_graph_def(
       graph_def=gdef,
-      input_map={input_name:next_element},
+      input_map={input_name: rand},
       return_elements=outputs
     )
     out = out[0].outputs[0]
@@ -123,12 +119,10 @@ def runGraph(gdef, batch_size, input_name, outputs):
   with tf.Session(graph=g,config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
     
     imagelist=[]
-    while True:
-      try:
+    for batch in range(num_batches):
         vals=sess.run(outlist)
         imagelist.append(vals[0])
-      except:
-        result = np.concatenate(imagelist, axis=0)
-        break
+
+    result = np.concatenate(imagelist, axis=0)
 
   return result

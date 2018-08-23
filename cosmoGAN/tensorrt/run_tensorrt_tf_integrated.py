@@ -7,6 +7,7 @@ from tensorflow.python.ops import data_flow_ops
 import tensorflow.contrib.tensorrt as trt
 
 import numpy as np
+import h5py as h5
 import time
 from tensorflow.python.platform import gfile
 from tensorflow.python.client import timeline
@@ -39,8 +40,9 @@ if "__main__" in __name__:
   P.add_argument('--FP16',action='store_true')
   P.add_argument('--INT8',action='store_true')
   P.add_argument('--input_prefix',type=str)
-  P.add_argument('--num_loops',type=int,default=20)
-  P.add_argument('--batch_size',type=int,default=128)
+  P.add_argument('--num_loops', type=int, default=20)
+  P.add_argument('--batch_size', type=int, default=128)
+  P.add_argument('--num_batches', type=int, default=100)
   P.add_argument('--with_timeline',action='store_true')
   P.add_argument('--gpu',type=int,default=0)  
   P.add_argument('--mode',type=str,default="time",help="Specify whether to run the graph or time it {time, run}")
@@ -70,9 +72,13 @@ if "__main__" in __name__:
       timings,comp,valfp32,mdstats = timeGraph(graph_def, f.batch_size, f.num_loops, "z", ["generator/Tanh"], dummy_input, timelineName)
       printStats("TRT-FP32",timings,f.batch_size)
       printStats("TRT-FP32RS",mdstats,f.batch_size)
+    elif f.mode == "inference":
+      result = runGraph(graph_def, f.batch_size, f.num_batches, "z", ["generator/Tanh"])
+      result = np.squeeze(result)
+      with h5.File("result_fp32.h5","w-") as fil:
+        fil["data"] = result[...]
     else:
-      result = runGraph(graph_def, f.batch_size, "z", ["generator/Tanh"])
-      np.save("result_fp32.npy", result)
+      raise ValueError("Error, mode {mode} not supported.".format(f.mode))
   if f.FP16:
     #load graph
     graph_def = load_graph(f.input_prefix+'.FP32.pb')
@@ -81,6 +87,10 @@ if "__main__" in __name__:
       timings,comp,valfp32,mdstats = timeGraph(graph_def, f.batch_size, f.num_loops, "z", ["generator/Tanh"], dummy_input, timelineName)
       printStats("TRT-FP16",timings,f.batch_size)
       printStats("TRT-FP16RS",mdstats,f.batch_size)
+    elif f.mode == "inference":
+      result = runGraph(graph_def, f.batch_size, f.num_batches, "z", ["generator/Tanh"])
+      result = np.squeeze(result)
+      with h5.File("result_fp16.h5","w-") as fil:
+        fil["data"] = result[...]
     else:
-      result = runGraph(graph_def, f.batch_size, "z", ["generator/Tanh"])
-      np.save("result_fp16.npy", result)
+      raise ValueError("Error, mode {mode} not supported.".format(f.mode))

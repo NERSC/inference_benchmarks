@@ -17,7 +17,7 @@ def print_graph(filename):
         graph.ParseFromString(data)
 
     #display
-    display_nodes(graph.node)    
+    display_nodes(graph.node)
         
         
 # read frozen graph and display nodes

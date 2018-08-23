@@ -90,7 +90,7 @@ if "__main__" in __name__:
     calibGraph = getINT8CalibGraph(input_file=f.input_file, output_prefix=f.output_prefix, output=["generator/Tanh"], batch_size=f.batch_size, workspace_size=f.workspace_size)
     print('Calibrating Graph...')
     #create dummy input for calibrating
-    dummy_input = np.random.uniform(size=(f.batch_size*f.num_calibration_runs, 64)).astype(np.float32)
+    dummy_input = np.random.normal(size=(f.batch_size*f.num_calibration_runs, 64)).astype(np.float32)
     #time graph
     timeGraph(calibGraph, batch_size=f.batch_size, num_loops=f.num_calibration_runs, input_name="z", outputs=["generator/Tanh"], dummy_input=dummy_input)
     print('done...')

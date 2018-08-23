@@ -62,7 +62,7 @@ if "__main__" in __name__:
   print("Starting at",datetime.datetime.now())
   
   #cosmogan specific
-  dummy_input = np.random.uniform(size=(f.batch_size, 64)).astype(np.float32)
+  dummy_input = np.random.normal(size=(f.batch_size, 64)).astype(np.float32)
   
   if f.FP32:
     #load graph

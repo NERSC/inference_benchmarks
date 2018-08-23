@@ -1,0 +1,66 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import tensorflow as tf
+from tensorflow.core.framework import graph_pb2
+from tensorflow.python.framework import graph_io
+from tensorflow.python.ops import data_flow_ops
+import tensorflow.contrib.tensorrt as trt
+import os, sys
+import argparse
+
+sys.path.append("/home/tkurth/inference_benchmarks/cosmoGAN/cosmoGAN_src/networks")
+from models import dcgan, utils
+import numpy as np
+
+
+#main
+def main(params):
+
+  new_graph = tf.Graph()
+  #new_graph.set_default()
+  with new_graph.as_default() as g:
+    gan = dcgan.dcgan(output_size=256,
+                      nd_layers=4,
+                      ng_layers=4,
+                      df_dim=64,
+                      gf_dim=64,
+                      z_dim=64,
+                      data_format="NCHW",
+                      transpose_b=True)
+    
+    gan.inference_graph_V2()
+    
+    with tf.Session(graph=g) as sess:
+      saver = gan.saver
+      #restore graph from meta file
+      #saver = tf.train.import_meta_graph(params.input_meta_file)
+      #restore variables in graph
+      saver.restore(sess, params.input_checkpoint_file)
+      
+      #remove training nodes
+      graph_def = tf.graph_util.remove_training_nodes(sess.graph_def, protected_nodes=None)
+      
+      #save the inference graph
+      tf.train.write_graph(graph_def, params.output_log_dir, params.output_graph_file)
+    
+
+if "__main__" in __name__:
+  
+  P=argparse.ArgumentParser(prog="inference_graph")
+  P.add_argument('--input_meta_file',type=str,required=True,help="directory of meta (graph) file to reload")
+  P.add_argument('--output_log_dir',type=str,default="./",help="log dir for graph conversion")
+  P.add_argument('--input_checkpoint_file',type=str,required=True,help="directory of checkpoint (variables) to reload")
+  P.add_argument('--output_graph_file',type=str,required=True,help="output filename of inference graph")
+  P.add_argument('--gpu', type=int, default=0)
+  #P.add_argument('--update_graphdef',action='store_true')
+  
+  #parse args
+  f,unparsed=P.parse_known_args()
+  
+  #select the GPU
+  os.environ["CUDA_VISIBLE_DEVICES"]=str(f.gpu) #selects a specific device
+  
+  #run main and hand over the parameters
+  main(f)

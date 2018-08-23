@@ -107,7 +107,7 @@ def runGraph(gdef, batch_size, num_batches, input_name, outputs):
     
   #input
   with g.as_default():
-    rand = tf.random_uniform(shape=(batch_size, 64), minval=0., maxval=1.)
+    rand = tf.random_normal(shape=(batch_size, 64))
     out = tf.import_graph_def(
       graph_def=gdef,
       input_map={input_name: rand},

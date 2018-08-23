@@ -1,8 +1,10 @@
 #!/bin/bash
 
 #input paths
-inputdirreal=/data0/tkurth/data/cosmoGAN
+#inputdirreal=/data0/tkurth/data/cosmoGAN
+inputdirreal=/data1/mustafa/cosmo/data
 inputdirfake=./results
+#inputdirfake=~/inference_benchmarks/cosmoGAN/generic
 outputdir=./plots
 
 #create dirs

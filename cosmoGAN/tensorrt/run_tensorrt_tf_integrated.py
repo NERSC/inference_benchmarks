@@ -61,15 +61,12 @@ if "__main__" in __name__:
   timelineName=None
   print("Starting at",datetime.datetime.now())
   
-  #cosmogan specific
-  dummy_input = np.random.normal(size=(f.batch_size, 64)).astype(np.float32)
-  
   if f.FP32:
     #load graph
     graph_def = load_graph(f.input_prefix+'.FP32.pb')
     if f.mode == "time":
       if f.with_timeline: timelineName="FP32Timeline.json"
-      timings,comp,valfp32,mdstats = timeGraph(graph_def, f.batch_size, f.num_loops, "z", ["generator/Tanh"], dummy_input, timelineName)
+      timings,comp,valfp32,mdstats = timeGraph(graph_def, f.batch_size, f.num_loops, "z", ["generator/Tanh"], timelineName)
       printStats("TRT-FP32",timings,f.batch_size)
       printStats("TRT-FP32RS",mdstats,f.batch_size)
     elif f.mode == "inference":
@@ -84,7 +81,7 @@ if "__main__" in __name__:
     graph_def = load_graph(f.input_prefix+'.FP32.pb')
     if f.mode == "time":
       if f.with_timeline: timelineName="FP32Timeline.json"
-      timings,comp,valfp32,mdstats = timeGraph(graph_def, f.batch_size, f.num_loops, "z", ["generator/Tanh"], dummy_input, timelineName)
+      timings,comp,valfp32,mdstats = timeGraph(graph_def, f.batch_size, f.num_loops, "z", ["generator/Tanh"], timelineName)
       printStats("TRT-FP16",timings,f.batch_size)
       printStats("TRT-FP16RS",mdstats,f.batch_size)
     elif f.mode == "inference":

@@ -25,7 +25,7 @@ def load_graph(filename):
   return graph_def
 
 #time graph function
-def timeGraph(gdef, batch_size, num_loops, input_name, outputs, dummy_input, timelineName=None):
+def timeGraph(gdef, batch_size, num_loops, input_name, outputs, timelineName=None):
   tf.logging.info("Starting execution")
   gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.50)
   tf.reset_default_graph()

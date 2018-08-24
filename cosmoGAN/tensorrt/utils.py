@@ -32,14 +32,10 @@ def timeGraph(gdef, batch_size, num_loops, input_name, outputs, dummy_input, tim
   g = tf.Graph()
   outlist=[]
   with g.as_default():
-    inc=tf.constant(dummy_input, dtype=tf.float32)
-    dataset=tf.data.Dataset.from_tensors(inc)
-    dataset=dataset.repeat()
-    iterator=dataset.make_one_shot_iterator()
-    next_element=iterator.get_next()
+    rand = tf.random_normal(shape=(batch_size, 64))
     out = tf.import_graph_def(
       graph_def=gdef,
-      input_map={input_name:next_element},
+      input_map={input_name: rand},
       return_elements=outputs
     )
     out = out[0].outputs[0]

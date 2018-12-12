@@ -16,7 +16,7 @@ tf.logging.set_verbosity(tf.logging.INFO)
 
 import os
 
-from data import *
+#from data import *
 
 def load_graph(filename):
   with gfile.FastGFile(filename,'rb') as f:

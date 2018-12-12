@@ -91,3 +91,18 @@ if "__main__" in __name__:
         fil["data"] = result[...]
     else:
       raise ValueError("Error, mode {mode} not supported.".format(f.mode))
+  if f.INT8:
+    #load graph
+    graph_def = load_graph(f.input_prefix+'.INT8.pb')
+    if f.mode == "time":
+      if f.with_timeline: timelineName="INT8Timeline.json"
+      timings,comp,valfp32,mdstats = timeGraph(graph_def, f.batch_size, f.num_loops, "z", ["generator/Tanh"], timelineName)
+      printStats("TRT-INT8",timings,f.batch_size)
+      printStats("TRT-INT8RS",mdstats,f.batch_size)
+    elif f.mode == "inference":
+      result = runGraph(graph_def, f.batch_size, f.num_batches, "z", ["generator/Tanh"])
+      result = np.squeeze(result)
+      with h5.File("result_int8.h5","w-") as fil:
+        fil["data"] = result[...]
+    else:
+      raise ValueError("Error, mode {mode} not supported.".format(f.mode))

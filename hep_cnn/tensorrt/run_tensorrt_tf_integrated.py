@@ -73,10 +73,10 @@ if "__main__" in __name__:
       printStats("TRT-FP32",timings,f.batch_size)
       printStats("TRT-FP32RS",mdstats,f.batch_size)
     elif f.mode=='run':
-      result = runGraph(graph_def, f.batch_size, "Placeholder", ["Softmax"])
+      result = runGraph(graph_def, f.batch_size, 1, "Placeholder", ["Softmax"])
     elif f.mode == 'inference':
       outfilename = 'results_fp32.h5'
-      predictions, labels, weights, psr = runGraph(graph_def, f.batch_size, "Placeholder", ["Softmax"], dtype=np.float32, input_data=f.input_path)
+      predictions, labels, weights, psr = runGraph(graph_def, f.batch_size, 1, "Placeholder", ["Softmax"], dtype=np.float32, input_data=f.input_path)
     else:
       raise ValueError("Error, unknown mode {m}.".format(m=f.mode))
   if f.FP16:
@@ -88,13 +88,29 @@ if "__main__" in __name__:
       printStats("TRT-16",timings,f.batch_size)
       printStats("TRT-FP16RS",mdstats,f.batch_size)
     elif f.mode == 'run':
-      result = runGraph(graph_def, f.batch_size, "Placeholder", ["Softmax"])
+      result = runGraph(graph_def, f.batch_size, 1, "Placeholder", ["Softmax"])
     elif f.mode == 'inference':
       outfilename = 'results_fp16.h5'
-      predictions, labels, weights, psr = runGraph(graph_def, f.batch_size, "Placeholder", ["Softmax"], dtype=np.float32, input_data=f.input_path)
+      predictions, labels, weights, psr = runGraph(graph_def, f.batch_size, 1, "Placeholder", ["Softmax"], dtype=np.float32, input_data=f.input_path)
     else:
       raise ValueError("Error, unknown mode {m}.".format(m=f.mode))
 
+  if f.INT8:
+    #load graph
+    graph_def = load_graph(f.input_prefix+'.INT8.pb')
+    if f.mode == "time":
+      if f.with_timeline: timelineName="FP16Timeline.json"
+      timings,comp,valint8,mdstats = timeGraph(graph_def, f.batch_size, f.num_loops, "Placeholder", ["Softmax"], dummy_input, timelineName)
+      printStats("TRT-8",timings,f.batch_size)
+      printStats("TRT-INT8RS",mdstats,f.batch_size)
+    elif f.mode == 'run':
+      result = runGraph(graph_def, f.batch_size, 1, "Placeholder", ["Softmax"])
+    elif f.mode == 'inference':
+      outfilename = 'results_int8.h5'
+      predictions, labels, weights, psr = runGraph(graph_def, f.batch_size, 1, "Placeholder", ["Softmax"], dtype=np.float32, input_data=f.input_path)
+    else:
+      raise ValueError("Error, unknown mode {m}.".format(m=f.mode))
+    
   if f.mode == 'inference':
     with h5.File(outfilename, 'w-') as f:
       f['prediction'] = predictions[...]

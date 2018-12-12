@@ -113,7 +113,7 @@ def timeGraph(gdef, batch_size, num_loops, input_name, outputs, dummy_input, tim
 
 
 #produce output
-def runGraph(gdef, batch_size, input_name, outputs, dtype=np.float32, input_data=None):
+def runGraph(gdef, batch_size, num_loops, input_name, outputs, dtype=np.float32, input_data=None):
   
   #set up graph
   gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.5)
@@ -126,9 +126,8 @@ def runGraph(gdef, batch_size, input_name, outputs, dtype=np.float32, input_data
     if not input_data:
       input_data = np.random.uniform(size=(batch_size*100, 3, 224, 224)).astype(dtype)
       dataset=tf.data.Dataset.from_tensor_slices(input_data)
-      dataset=dataset.repeat(1)
       dataset=dataset.batch(batch_size)
-      iterator=dataset.make_one_shot_iterator()
+      iterator = dataset.make_initializable_iterator()
       next_image=iterator.get_next()
       
     elif isinstance(input_data, str): 
@@ -151,7 +150,7 @@ def runGraph(gdef, batch_size, input_name, outputs, dtype=np.float32, input_data
                                               output_shapes = ((3, 224, 224), (1), (1), (1), (1)))
       dataset = dataset.prefetch(batch_size)
       dataset = dataset.batch(batch_size, drop_remainder=True)
-      iterator = dataset.make_one_shot_iterator()
+      iterator = dataset.make_initializable_iterator()
       next_element = iterator.get_next()
       next_image = next_element[0]
     
@@ -172,21 +171,25 @@ def runGraph(gdef, batch_size, input_name, outputs, dtype=np.float32, input_data
     labels=[]
     weights=[]
     psr=[]
-    
-    #loop over dataset
-    while True:
-      try:
-        vals = sess.run(outlist)
-        predictions.append(vals[0][:,1])
-        labels.append(vals[1][:,0])
-        weights.append(vals[2][:,0])
-        psr.append(vals[3][:,0])
-      except:
-        print("I am done.")
-        predictions = np.concatenate(predictions, axis=0)
-        labels = np.concatenate(labels, axis=0)
-        weights = np.concatenate(weights, axis=0)
-        psr = np.concatenate(psr, axis=0)
-        break
+
+    #loop over epochs
+    for epoch in range(num_loops):
+      sess.run(iterator.initializer)
+      #loop over dataset
+      while True:
+        try:
+          vals = sess.run(outlist)
+          predictions.append(vals[0][:,1])
+          labels.append(vals[1][:,0])
+          weights.append(vals[2][:,0])
+          psr.append(vals[3][:,0])
+        except tf.errors.OutOfRangeError:
+          print("Epoch {} done.".format(epoch))
+          break
+        
+    predictions = np.concatenate(predictions, axis=0)
+    labels = np.concatenate(labels, axis=0)
+    weights = np.concatenate(weights, axis=0)
+    psr = np.concatenate(psr, axis=0)
         
   return predictions, labels, weights, psr

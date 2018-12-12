@@ -68,7 +68,7 @@ if "__main__" in __name__:
   P.add_argument('--input_path_calibration',type=str,default='./',help="path to read input files from for calibration mode")
   P.add_argument('--output_prefix',type=str)
   P.add_argument('--batch_size',type=int, default=32)
-  P.add_argument('--num_calibration_runs',type=int, default=100)
+  P.add_argument('--num_calibration_runs',type=int, default=10)
   P.add_argument('--workspace_size',type=int, default=1<<20,help="workspace size in MB")
   P.add_argument('--gpu', type=int, default=0)
   #P.add_argument('--update_graphdef',action='store_true')
@@ -94,7 +94,7 @@ if "__main__" in __name__:
     calibGraph = getINT8CalibGraph(input_file=f.input_file, output_prefix=f.output_prefix, output=["Softmax"], batch_size=f.batch_size, workspace_size=f.workspace_size)
     print('Calibrating Graph...')
     #run graph
-    runGraph(calibGraph, f.batch_size, "Placeholder", ["Softmax"], dtype=np.float32, input_data=f.input_path_calibration)
+    runGraph(calibGraph, f.batch_size, f.num_calibration_runs, "Placeholder", ["Softmax"], dtype=np.float32, input_data=f.input_path_calibration)
     print('done...')
     #get int8 graph
     getINT8InferenceGraph(output_prefix=f.output_prefix, calibGraph=calibGraph)

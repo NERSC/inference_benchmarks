@@ -67,7 +67,7 @@ if "__main__" in __name__:
   P.add_argument('--input_file',type=str)
   P.add_argument('--output_prefix',type=str)
   P.add_argument('--batch_size',type=int,default=128)
-  P.add_argument('--num_calibration_runs',type=int,default=100)
+  P.add_argument('--num_calibration_runs',type=int,default=10)
   P.add_argument('--workspace_size',type=int,default=1<<20,help="workspace size in MB")
   P.add_argument('--gpu',type=int,default=0)
   #P.add_argument('--update_graphdef',action='store_true')
